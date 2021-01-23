@@ -1,0 +1,42 @@
+{
+  "name": "@mntm/router",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "jsnext:main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "lint": "eslint --fix --ext .js,.jsx,.ts,.tsx --ignore-path .gitignore ."
+  },
+  "author": {
+    "name": "Anton Petrov",
+    "email": "im@petrov.engineer",
+    "url": "https://petrov.engineer"
+  },
+  "description": "Router for VK Mini Apps",
+  "license": "MIT",
+  "keywords": [
+    "vk",
+    "vkontakte",
+    "vkcom",
+    "vkapps",
+    "vk-apps",
+    "router"
+  ],
+  "homepage": "https://github.com/maxi-team/router",
+  "bugs": "https://github.com/maxi-team/router/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/maxi-team/router.git"
+  },
+  "dependencies": {
+    "mitt": "^2.1.0"
+  },
+  "devDependencies": {
+    "@mntm/eslint-config": "^0.2.0",
+    "@types/react": "^17.0.0",
+    "eslint": "^7.18.0",
+    "typescript": "^4.1.3"
+  }
+}
