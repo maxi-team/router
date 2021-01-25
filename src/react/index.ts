@@ -9,6 +9,11 @@ export const useRouter = () => {
   return getInstance();
 };
 
+export const useHistory = () => {
+  const router = useRouter();
+  return router.history;
+};
+
 export const usePage = () => {
   const router = useRouter();
   return router.history.current;

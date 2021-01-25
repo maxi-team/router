@@ -1,9 +1,5 @@
 let _promise: Promise<void> = Promise.resolve();
 
-export const waitTick = async (wait: (callback: VoidFunction) => void) => {
-  return _promise = new Promise<void>(wait);
-};
-
 export const nextTick = async (after: VoidFunction) => {
   return _promise.then(after);
 };

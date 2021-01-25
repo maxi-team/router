@@ -19,12 +19,15 @@ export class History {
   router!: Router;
   updater!: EnhancedEmitter;
 
+  idled = false;
+  locked = false;
+
   constructor(router: Router) {
     this.router = router;
 
-    this.initUpdater();
-    this.initState();
-    this.initListener();
+    this._initUpdater();
+    this._initState();
+    this._initListener();
   }
 
   get current(): Readonly<Page> {
@@ -44,7 +47,7 @@ export class History {
     for (let i = this.stack.length - 2; i >= 0; --i) {
       page = this.stack[i];
       if (page.view === this.current.view) {
-        return [null, page.panel];
+        return [this.current.panel, page.panel];
       } else {
         return constSwipeList;
       }
@@ -54,6 +57,11 @@ export class History {
   }
 
   update() {
+    if (this.idled) {
+      log('[-] update');
+      return;
+    }
+    log('[+] update');
     this.updater.emit('update');
   }
 
@@ -70,7 +78,7 @@ export class History {
       page.index = ++this.index;
       this.stack.push(page);
 
-      this.nativePush(page);
+      this._nativePush(page);
 
       this.update();
     });
@@ -85,7 +93,7 @@ export class History {
       page.index = this.index;
       this.stack[this.index] = page;
 
-      this.nativeReplace(page);
+      this._nativeReplace(page);
 
       this.update();
     });
@@ -96,8 +104,12 @@ export class History {
     if (index === -1) {
       this.push(nextPage);
     } else {
+      this.idled = true;
       this.moveTo(index);
-      this.replace(nextPage);
+      nextTick(() => {
+        this.idled = false;
+        this.replace(nextPage);
+      });
     }
   }
 
@@ -112,7 +124,7 @@ export class History {
     scheduleBackwardTick(() => {
       log('[<] moveBy: ', by);
 
-      this.nativeGo(by);
+      this._nativeGo(by);
     });
   }
 
@@ -130,30 +142,108 @@ export class History {
   }
 
   resetTo(page: Page) {
+    this.idled = true;
     this.reset();
-    this.replace(page);
+    nextTick(() => {
+      this.idled = false;
+      this.replace(page);
+    });
   }
 
-  private nativeScroll() {
+  private _nativeScroll() {
     window.history.scrollRestoration = 'manual';
   }
 
-  private nativePush(page: Page) {
-    this.nativeScroll();
+  private _nativePush(page: Page) {
+    this._nativeScroll();
     window.history.pushState(page, page.url, '#' + page.url);
   }
 
-  private nativeReplace(page: Page) {
-    this.nativeScroll();
+  private _nativeReplace(page: Page) {
+    this._nativeScroll();
     window.history.replaceState(page, page.url, '#' + page.url);
   }
 
-  private nativeGo(by: number) {
-    this.nativeScroll();
+  private _nativeGo(by: number) {
+    this._nativeScroll();
     window.history.go(by);
   }
 
-  private initUpdater() {
+  private _popLocked(e: PopStateEvent) {
+    log('[>] lock', e.state);
+    scheduleStateTick(() => {
+      log('[<] lock', e.state);
+
+      if (isPageLike(e.state)) {
+        const page = new Page(e.state);
+
+        if (page.index > this.index) {
+          this._nativeGo(-1);
+        }
+      }
+
+      this._nativePush(this.current);
+    });
+  }
+
+  private _popDefault(e: PopStateEvent) {
+    log('[>] popstate', e.state);
+    scheduleStateTick(() => {
+      log('[<] popstate', e.state);
+
+      let shouldReplace = false;
+
+      let page;
+      if (isPageLike(e.state)) {
+        page = new Page(e.state);
+      } else {
+        shouldReplace = true;
+        try {
+          const url = this.location;
+          page = buildPageFromURL(url, this.router.routes, this.router.meta);
+        } catch {
+          page = new Page({
+            route: '/'
+          });
+        }
+      }
+
+      if (
+        page.index < this.stack.length &&
+        isShallowEqualPage(page, this.stack[page.index])
+      ) {
+        this.index = page.index;
+      } else {
+        shouldReplace = true;
+        page.index = this.index + 1;
+      }
+
+      if (page.index > this.index) {
+        this.index = page.index;
+        this.stack.push(page);
+      } else {
+        this.stack.splice(this.index, this.stack.length, page);
+      }
+
+      if (shouldReplace) {
+        this._nativeReplace(page);
+      }
+
+      this.update();
+    });
+  }
+
+  private _initListener() {
+    window.addEventListener('popstate', (e = window.event as PopStateEvent) => {
+      if (this.locked) {
+        this._popLocked(e);
+      } else {
+        this._popDefault(e);
+      }
+    });
+  }
+
+  private _initUpdater() {
     const emitter = mitt();
     Object.assign(emitter as unknown, {
       once: (type: string, handler: Handler) => {
@@ -167,7 +257,7 @@ export class History {
     this.updater = emitter as EnhancedEmitter;
   }
 
-  private initState() {
+  private _initState() {
     this.index = 0;
 
     let page;
@@ -181,55 +271,6 @@ export class History {
     }
 
     this.stack = [page];
-    this.nativeReplace(page);
-  }
-
-  private initListener() {
-    window.addEventListener('popstate', (e = window.event as PopStateEvent) => {
-      log('[>] popstate', e.state);
-      scheduleStateTick(() => {
-        log('[<] popstate', e.state);
-
-        let shouldReplace = false;
-
-        let page;
-        if (isPageLike(e.state)) {
-          page = new Page(e.state);
-        } else {
-          shouldReplace = true;
-          try {
-            const url = this.location;
-            page = buildPageFromURL(url, this.router.routes, this.router.meta);
-          } catch {
-            page = new Page({
-              route: '/'
-            });
-          }
-        }
-
-        if (
-          page.index < this.stack.length &&
-          isShallowEqualPage(page, this.stack[page.index])
-        ) {
-          this.index = page.index;
-        } else {
-          shouldReplace = true;
-          page.index = this.index + 1;
-        }
-
-        if (page.index > this.index) {
-          this.index = page.index;
-          this.stack.push(page);
-        } else {
-          this.stack.splice(this.index, this.stack.length, page);
-        }
-
-        if (shouldReplace) {
-          this.nativeReplace(page);
-        }
-
-        this.update();
-      });
-    });
+    this._nativeReplace(page);
   }
 }

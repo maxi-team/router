@@ -3,8 +3,9 @@ export declare type PageParams = {
 };
 
 export declare type Structure = string;
-export declare type NullableStructure = Structure | null | undefined;
-export declare type NullableParams = PageParams | null | undefined;
+export declare type Nullable<T> = T | null | undefined;
+export declare type NullableStructure = Nullable<Structure>;
+export declare type NullableParams = Nullable<PageParams>;
 
 export declare type PageLike = {
   route: string;

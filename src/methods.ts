@@ -6,6 +6,10 @@ import type { InitRouteList } from './types';
 let instance: Router | null = null;
 
 export const init = (routes: InitRouteList, debug = false) => {
+  if (instance !== null) {
+    throw new Error('Router is already initialized');
+  }
+
   configure(debug);
   instance = new Router(routes);
 };

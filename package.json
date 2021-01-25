@@ -1,14 +1,10 @@
 {
   "name": "@mntm/router",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "jsnext:main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc --project tsconfig.json",
-    "lint": "eslint --fix --ext .js,.jsx,.ts,.tsx --ignore-path .gitignore ."
-  },
   "author": {
     "name": "Anton Petrov",
     "email": "im@petrov.engineer",
@@ -30,6 +26,10 @@
     "type": "git",
     "url": "https://github.com/maxi-team/router.git"
   },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "lint": "eslint --fix --ext .js,.jsx,.ts,.tsx --ignore-path .gitignore ."
+  },
   "dependencies": {
     "mitt": "^2.1.0"
   },
@@ -38,5 +38,13 @@
     "@types/react": "^17.0.0",
     "eslint": "^7.18.0",
     "typescript": "^4.1.3"
+  },
+  "peerDependencies": {
+    "react": "^17.0.1"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
   }
 }

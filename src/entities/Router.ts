@@ -116,4 +116,20 @@ export class Router {
       this.history.back();
     }
   }
+
+  disable() {
+    this.history.idled = true;
+  }
+
+  enable() {
+    this.history.idled = false;
+  }
+
+  lock() {
+    this.history.locked = true;
+  }
+
+  unlock() {
+    this.history.locked = false;
+  }
 }
