@@ -1,6 +1,6 @@
 {
   "name": "@mntm/router",
-  "version": "1.1.0",
+  "version": "1.2.1",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "jsnext:main": "dist/index.js",
@@ -10,7 +10,7 @@
     "email": "im@petrov.engineer",
     "url": "https://petrov.engineer"
   },
-  "description": "Router for VK Mini Apps",
+  "description": "A flexible event based router for VK Mini Apps",
   "license": "MIT",
   "keywords": [
     "vk",
