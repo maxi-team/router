@@ -49,20 +49,12 @@ export class Router {
     this.history.replace(this.buildPage(route, params));
   }
 
-  pop() {
-    this.history.back();
-  }
-
   popTo(to: number) {
     this.history.moveTo(to);
   }
 
   popBy(by: number) {
     this.history.moveBy(by);
-  }
-
-  reset() {
-    this.history.reset();
   }
 
   resetTo(route: string, params?: PageParams) {
@@ -99,37 +91,45 @@ export class Router {
     }
   }
 
-  popModal() {
+  pop = () => {
+    this.history.back();
+  };
+
+  reset = () => {
+    this.history.reset();
+  };
+
+  popModal = () => {
     if (this.history.current.hasModal) {
       this.history.back();
     }
-  }
+  };
 
-  popPopup() {
+  popPopup = () => {
     if (this.history.current.hasPopout) {
       this.history.back();
     }
-  }
+  };
 
-  popOverlay() {
+  popOverlay = () => {
     if (this.history.current.hasOverlay) {
       this.history.back();
     }
-  }
+  };
 
-  disable() {
+  disable = () => {
     this.history.idled = true;
-  }
+  };
 
-  enable() {
+  enable = () => {
     this.history.idled = false;
-  }
+  };
 
-  lock() {
+  lock = () => {
     this.history.locked = true;
-  }
+  };
 
-  unlock() {
+  unlock = () => {
     this.history.locked = false;
-  }
+  };
 }

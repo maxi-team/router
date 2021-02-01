@@ -47,7 +47,7 @@ export class History {
     for (let i = this.stack.length - 2; i >= 0; --i) {
       page = this.stack[i];
       if (page.view === this.current.view) {
-        return [this.current.panel, page.panel];
+        return [page.panel, this.current.panel];
       } else {
         return constSwipeList;
       }

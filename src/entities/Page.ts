@@ -39,8 +39,8 @@ export class Page {
 
     this.params = pageLike.params || {};
 
-    this.modal = pageLike.modal || this.params['m'];
-    this.popout = pageLike.popout || this.params['p'];
+    this.modal = pageLike.modal || this.params['m'] || null;
+    this.popout = pageLike.popout || this.params['p'] || null;
 
     this.route = pageLike.route || '/';
     this.url = pageLike.url || this.route;
