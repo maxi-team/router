@@ -1,6 +1,7 @@
 import { History } from './History';
 import { Page } from './Page';
 import { buildMetaListFromInitList, buildPageFromInit } from '../utils/route';
+import { nextTick } from './scheduler';
 
 import type { InitRouteList, PageParams, RouteMetaList, Structure } from '../types';
 
@@ -42,79 +43,109 @@ export class Router {
   }
 
   push(route: string, params?: PageParams) {
-    this.history.push(this.buildPage(route, params));
+    nextTick(() => {
+      this.history.push(this.buildPage(route, params));
+    });
   }
 
   replace(route: string, params?: PageParams) {
-    this.history.replace(this.buildPage(route, params));
+    nextTick(() => {
+      this.history.replace(this.buildPage(route, params));
+    });
   }
 
   popTo(to: number) {
-    this.history.moveTo(to);
+    nextTick(() => {
+      this.history.moveTo(to);
+    });
   }
 
   popBy(by: number) {
-    this.history.moveBy(by);
+    nextTick(() => {
+      this.history.moveBy(by);
+    });
   }
 
+  reset = () => {
+    nextTick(() => {
+      this.history.reset();
+    });
+  };
+
   resetTo(route: string, params?: PageParams) {
-    this.history.resetTo(this.buildPage(route, params));
+    nextTick(() => {
+      this.history.resetTo(this.buildPage(route, params));
+    });
   }
 
   pushAfterMove(prevRoute: string, nextRoute: string, params?: PageParams) {
-    this.history.pushAfterMove(this.buildPage(prevRoute), this.buildPage(nextRoute, params));
+    nextTick(() => {
+      this.history.pushAfterMove(this.buildPage(prevRoute), this.buildPage(nextRoute, params));
+    });
   }
 
   pushModal(modal: Structure, params?: PageParams) {
-    this.history.push(this.buildModal(modal, params));
+    nextTick(() => {
+      this.history.push(this.buildModal(modal, params));
+    });
   }
 
   replaceModal(modal: Structure, params?: PageParams) {
-    const nextPage = this.buildModal(modal, params);
-    if (this.history.current.hasModal) {
-      this.history.replace(nextPage);
-    } else {
-      this.history.push(nextPage);
-    }
+    nextTick(() => {
+      const nextPage = this.buildModal(modal, params);
+      if (this.history.current.hasModal) {
+        this.history.replace(nextPage);
+      } else {
+        this.history.push(nextPage);
+      }
+    });
   }
 
   pushPopup(popup: Structure, params?: PageParams) {
-    this.history.push(this.buildPopout(popup, params));
+    nextTick(() => {
+      this.history.push(this.buildPopout(popup, params));
+    });
   }
 
   replacePopup(popup: Structure, params?: PageParams) {
-    const nextPage = this.buildPopout(popup, params);
-    if (this.history.current.hasPopout) {
-      this.history.replace(nextPage);
-    } else {
-      this.history.push(nextPage);
-    }
+    nextTick(() => {
+      const nextPage = this.buildPopout(popup, params);
+      if (this.history.current.hasPopout) {
+        this.history.replace(nextPage);
+      } else {
+        this.history.push(nextPage);
+      }
+    });
   }
 
   pop = () => {
-    this.history.back();
-  };
-
-  reset = () => {
-    this.history.reset();
+    nextTick(() => {
+      this.history.back();
+    });
   };
 
   popModal = () => {
-    if (this.history.current.hasModal) {
-      this.history.back();
-    }
+    nextTick(() => {
+      if (this.history.current.hasModal) {
+        this._popPure();
+      }
+    });
   };
 
   popPopup = () => {
-    if (this.history.current.hasPopout) {
-      this.history.back();
-    }
+    nextTick(() => {
+      if (this.history.current.hasPopout) {
+        this._popPure();
+      }
+    });
   };
 
   popOverlay = () => {
-    if (this.history.current.hasOverlay) {
-      this.history.back();
-    }
+    nextTick(() => {
+      if (this.history.current.hasOverlay) {
+        this._popPure();
+      }
+    });
   };
 
   disable = () => {
@@ -132,4 +163,19 @@ export class Router {
   unlock = () => {
     this.history.locked = false;
   };
+
+  private _buildPurePage() {
+    const nextPage = this.history.current.clone();
+    nextPage.modal = null;
+    nextPage.popout = null;
+    return nextPage.compile();
+  }
+
+  private _popPure() {
+    if (this.history.index === 0) {
+      this.history.replace(this._buildPurePage());
+    } else {
+      this.history.back();
+    }
+  }
 }

@@ -70,33 +70,27 @@ export class History {
   }
 
   push(page: Page) {
-    log('[>] push: ', page.route, page.params);
-    nextTick(() => {
-      log('[<] push: ', page.route, page.params);
+    log('[<] push: ', page.route, page.params);
 
-      page.url = buildURLFromPage(page, this.router.meta);
-      page.index = ++this.index;
-      this.stack.push(page);
+    page.url = buildURLFromPage(page, this.router.meta);
+    page.index = ++this.index;
+    this.stack.push(page);
 
-      this._nativePush(page);
+    this._nativePush(page);
 
-      this.update();
-    });
+    this.update();
   }
 
   replace(page: Page) {
-    log('[>] replace: ', page.route, page.params);
-    nextTick(() => {
-      log('[<] replace: ', page.route, page.params);
+    log('[<] replace: ', page.route, page.params);
 
-      page.url = buildURLFromPage(page, this.router.meta);
-      page.index = this.index;
-      this.stack[this.index] = page;
+    page.url = buildURLFromPage(page, this.router.meta);
+    page.index = this.index;
+    this.stack[this.index] = page;
 
-      this._nativeReplace(page);
+    this._nativeReplace(page);
 
-      this.update();
-    });
+    this.update();
   }
 
   pushAfterMove(prevPage: Page, nextPage: Page) {

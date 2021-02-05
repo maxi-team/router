@@ -49,10 +49,14 @@ export class Page {
   compile() {
     if (this.hasModal) {
       this.params['m'] = this.modal as string;
+    } else {
+      delete this.params['m'];
     }
 
     if (this.hasPopout) {
       this.params['p'] = this.popout as string;
+    } else {
+      delete this.params['p'];
     }
 
     return this;
