@@ -1,7 +1,13 @@
 let _promise: Promise<void> = Promise.resolve();
 
-export const nextTick = async (after: VoidFunction) => {
-  return _promise.then(after);
+const noop = () => {
+  // noop
+};
+const fixEventLoop = () => window.setTimeout(noop);
+
+export const nextTick = (after: VoidFunction) => {
+  _promise.then(after);
+  fixEventLoop();
 };
 
 const createBackwardTick = async () => {
@@ -25,6 +31,7 @@ export const scheduleBackwardTick = (after: VoidFunction) => {
   const tick = _promise;
   _promise = createBackwardTick();
   tick.then(after);
+  fixEventLoop();
 };
 
 export const scheduleStateTick = (after: VoidFunction) => {
