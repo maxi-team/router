@@ -1,9 +1,10 @@
-import type { DependencyList } from 'react';
 import type { Router } from '../entities/Router';
 import type { Structure } from '../types';
 
 import { getInstance } from '../methods';
-import { useMemo, useEffect, useReducer } from 'react';
+
+import { useMemo } from 'react';
+import { useUpdate, useMount } from '@mntm/shared';
 
 export const useRouter = () => {
   return getInstance();
@@ -41,28 +42,20 @@ export const useMemoParams = (panel: Structure) => {
   }, [panel]);
 };
 
-const constRef = {};
-const constDependencyList: DependencyList = [];
-
-const subscribeReducer = () => ({});
-const useSubscribeReducer = () => {
-  return useReducer(subscribeReducer, constRef)[1];
-};
-
 export const useSubscribe = () => {
   const router = useRouter();
-  const next = useSubscribeReducer();
-  useEffect(() => {
+  const next = useUpdate();
+  useMount(() => {
     router.history.updater.on('update', next);
     return () => router.history.updater.off('update', next);
-  }, constDependencyList);
+  });
   return router.history.current;
 };
 
 export const useSubscribeOverlay = () => {
   const router = useRouter();
-  const next = useSubscribeReducer();
-  useEffect(() => {
+  const next = useUpdate();
+  useMount(() => {
     let lastModal = router.history.current.modal;
     let lastPopout = router.history.current.popout;
     const checkNext = () => {
@@ -77,6 +70,6 @@ export const useSubscribeOverlay = () => {
     };
     router.history.updater.on('update', checkNext);
     return () => router.history.updater.off('update', checkNext);
-  }, constDependencyList);
+  });
   return router.history.current;
 };
