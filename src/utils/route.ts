@@ -1,4 +1,5 @@
 import { Page } from '../entities/Page';
+import { log } from './report';
 
 import type { PageParams, Token, RouteMeta, RouteMetaList, InitRouteList, InitPage, PageLike } from '../types';
 
@@ -81,7 +82,10 @@ export const buildPageFromURL = (url: string, routeList: InitRouteList, metaList
   }
 
   if (!matchMeta || !matchRoute) {
-    throw new Error('Route for page not found');
+    log('[e] Route for page not found');
+    return new Page({
+      route: '/'
+    }).compile();
   }
 
   const matchTokens = matchMeta.regex.exec(path);

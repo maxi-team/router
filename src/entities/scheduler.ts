@@ -1,39 +1,32 @@
 let _promise: Promise<void> = Promise.resolve();
 
-const noop = () => {
-  // noop
+const _noop = () => {
+  // safari has bug with immediate resolve
+  // we need add something to event loop
 };
-const fixEventLoop = () => window.setTimeout(noop);
-
-export const nextTick = (after: VoidFunction) => {
-  _promise.then(after);
-  fixEventLoop();
+const _fixEventLoop = () => window.setTimeout(_noop, 0);
+const _scheduleTick = (promise: Promise<void>, after: VoidFunction) => {
+  promise.then(after);
+  _fixEventLoop();
 };
 
-const createBackwardTick = async () => {
+const _createBackwardTick = async () => {
   return new Promise<void>((resolve) => {
     const flush = () => {
       window.removeEventListener('popstate', flush);
-      window.setTimeout(resolve, 26);
+      window.setTimeout(resolve, 0);
     };
     window.addEventListener('popstate', flush);
-    window.setTimeout(flush, 900);
+    window.setTimeout(flush, 120);
   });
 };
 
-const createStateTick = async () => {
-  return new Promise<void>((resolve) => {
-    window.setTimeout(resolve, 0);
-  });
+export const nextTick = (after: VoidFunction) => {
+  _scheduleTick(_promise, after);
 };
 
-export const scheduleBackwardTick = (after: VoidFunction) => {
+export const backwardTick = (after: VoidFunction) => {
   const tick = _promise;
-  _promise = createBackwardTick();
-  tick.then(after);
-  fixEventLoop();
-};
-
-export const scheduleStateTick = (after: VoidFunction) => {
-  _promise = createStateTick().then(after);
+  _promise = _createBackwardTick();
+  _scheduleTick(tick, after);
 };

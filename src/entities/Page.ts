@@ -37,7 +37,7 @@ export class Page {
     this.view = pageLike.view || Page.defaultView;
     this.panel = pageLike.panel || Page.defaultPanel;
 
-    this.params = pageLike.params || {};
+    this.params = Object.assign({}, pageLike.params);
 
     this.modal = pageLike.modal || this.params['m'] || null;
     this.popout = pageLike.popout || this.params['p'] || null;

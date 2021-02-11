@@ -2,7 +2,7 @@ import mitt from 'mitt';
 import type { Emitter, Handler } from 'mitt';
 
 import { Page } from './Page';
-import { nextTick, scheduleBackwardTick, scheduleStateTick } from './scheduler';
+import { nextTick, backwardTick } from './scheduler';
 
 import { log } from '../utils/report';
 import { Router } from './Router';
@@ -25,8 +25,8 @@ export class History {
   constructor(router: Router) {
     this.router = router;
 
-    this._initUpdater();
     this._initState();
+    this._initUpdater();
     this._initListener();
   }
 
@@ -115,7 +115,7 @@ export class History {
     }
 
     log('[>] moveBy: ', by);
-    scheduleBackwardTick(() => {
+    backwardTick(() => {
       log('[<] moveBy: ', by);
 
       this._nativeGo(by);
@@ -145,7 +145,9 @@ export class History {
   }
 
   private _nativeScroll() {
-    window.history.scrollRestoration = 'manual';
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
   }
 
   private _nativePush(page: Page) {
@@ -164,71 +166,64 @@ export class History {
   }
 
   private _popLocked(e: PopStateEvent) {
-    log('[>] lock', e.state);
-    scheduleStateTick(() => {
-      log('[<] lock', e.state);
+    log('[<] lock', e.state);
 
-      if (isPageLike(e.state)) {
-        const page = new Page(e.state);
+    if (isPageLike(e.state)) {
+      const page = new Page(e.state);
 
-        if (page.index > this.index) {
-          this._nativeGo(-1);
-        }
+      if (page.index > this.index) {
+        this._nativeGo(-1);
+      } else {
+        this._nativePush(this.current);
       }
-
-      this._nativePush(this.current);
-    });
+    } else {
+      this._nativeReplace(this.current);
+    }
   }
 
   private _popDefault(e: PopStateEvent) {
-    log('[>] popstate', e.state);
-    scheduleStateTick(() => {
-      log('[<] popstate', e.state);
+    log('[<] popstate', e.state);
 
-      let shouldReplace = false;
+    let shouldReplace = false;
 
-      let page;
-      if (isPageLike(e.state)) {
-        page = new Page(e.state);
-      } else {
-        shouldReplace = true;
-        try {
-          const url = this.location;
-          page = buildPageFromURL(url, this.router.routes, this.router.meta);
-        } catch {
-          page = new Page({
-            route: '/'
-          });
-        }
-      }
+    let page;
+    if (isPageLike(e.state)) {
+      page = new Page(e.state);
+    } else {
+      shouldReplace = true;
+      page = buildPageFromURL(this.location, this.router.routes, this.router.meta);
+    }
 
-      if (
-        page.index < this.stack.length &&
-        isShallowEqualPage(page, this.stack[page.index])
-      ) {
-        this.index = page.index;
-      } else {
-        shouldReplace = true;
-        page.index = this.index + 1;
-      }
+    if (
+      page.index < this.stack.length &&
+      isShallowEqualPage(page, this.stack[page.index])
+    ) {
+      this.index = page.index;
+    } else {
+      shouldReplace = true;
+      page.index = this.index + 1;
+    }
 
-      if (page.index > this.index) {
-        this.index = page.index;
-        this.stack.push(page);
-      } else {
-        this.stack.splice(this.index, this.stack.length, page);
-      }
+    if (page.index > this.index) {
+      this.index = page.index;
+      this.stack.push(page);
+    } else {
+      this.stack.splice(this.index, this.stack.length, page);
+    }
 
-      if (shouldReplace) {
-        this._nativeReplace(page);
-      }
+    if (shouldReplace) {
+      this._nativeReplace(page);
+    }
 
-      this.update();
-    });
+    this.update();
   }
 
   private _initListener() {
     window.addEventListener('popstate', (e = window.event as PopStateEvent) => {
+      if (this.idled) {
+        return;
+      }
+
       if (this.locked) {
         this._popLocked(e);
       } else {
@@ -252,18 +247,8 @@ export class History {
   }
 
   private _initState() {
+    const page = buildPageFromURL(this.location, this.router.routes, this.router.meta);
     this.index = 0;
-
-    let page;
-    try {
-      const url = this.location;
-      page = buildPageFromURL(url, this.router.routes, this.router.meta);
-    } catch {
-      page = new Page({
-        route: '/'
-      });
-    }
-
     this.stack = [page];
     this._nativeReplace(page);
   }
