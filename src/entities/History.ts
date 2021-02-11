@@ -211,6 +211,10 @@ export class History {
       this.stack.splice(this.index, this.stack.length, page);
     }
 
+    if (this.idled) {
+      return;
+    }
+
     if (shouldReplace) {
       this._nativeReplace(page);
     }
@@ -220,10 +224,6 @@ export class History {
 
   private _initListener() {
     window.addEventListener('popstate', (e = window.event as PopStateEvent) => {
-      if (this.idled) {
-        return;
-      }
-
       if (this.locked) {
         this._popLocked(e);
       } else {
