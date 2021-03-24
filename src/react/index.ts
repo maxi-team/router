@@ -27,7 +27,7 @@ export const useParams = () => {
 
 const findHistory = (router: Router, panel: Structure) => {
   const stack = router.history.stack;
-  for (let i = stack.length - 2; i >= 0; --i) {
+  for (let i = stack.length - 1; i >= 0; --i) {
     if (stack[i].panel === panel) {
       return stack[i];
     }
